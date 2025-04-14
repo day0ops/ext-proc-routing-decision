@@ -1,0 +1,44 @@
+name: Build and Push to Artifact Registry
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+env:
+  PROJECT_ID: solo-test-236622
+  REGION: australia-southeast1
+  REPO: australia-southeast1-docker.pkg.dev/solo-test-236622/apac
+
+jobs:
+  build-push-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - id: auth
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: "${{ secrets.SERVICE_ACCOUNT_KEY }}"
+
+      - name: setup-gcloud
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: check-gcloud-cli
+        run: gcloud info
+
+      - name: install-podman
+        run: |-
+          sudo apt-get update
+          sudo apt-get -y install podman
+
+      - run: podman version
+
+      - name: docker-auth
+        run: |-
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: build-and-push-image
+        run: PUSH_MULTIARCH=true make docker-build
+        env:
+          DOCKER_SUPPORTED_PLATFORMS: linux/amd64

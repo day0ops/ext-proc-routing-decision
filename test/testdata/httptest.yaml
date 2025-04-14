@@ -1,0 +1,9 @@
+name: it should match empty instruction
+input:
+  headers:
+    - name: preferred-svc
+      value: foo
+expect:
+  requestHeaders:
+    - name: x-routing-decision
+      exact: foo
